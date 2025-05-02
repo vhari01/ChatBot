@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canadian Rights Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .chat-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            height: 500px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            max-width: 80%;
+            white-space: pre-wrap;
+            animation: fadeIn 0.3s ease-out;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message {
+            background: linear-gradient(135deg, #f1f1f1, #e0e0e0);
+            border-bottom-left-radius: 4px;
+        }
+
+        .bot-message h3 {
+            color: #2e7d32;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+
+        .bot-message ul, .bot-message ol {
+            margin-left: 25px;
+            margin-bottom: 12px;
+        }
+
+        .bot-message li {
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .bot-message p {
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        .bot-message .section {
+            margin-bottom: 20px;
+        }
+
+        .resources-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .resource-item {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .resource-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .resource-name {
+            color: #1b5e20;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .resource-link {
+            color: #1565c0;
+            text-decoration: none;
+            word-break: break-all;
+            font-weight: 500;
+            display: inline-block;
+            margin: 5px 0;
+            transition: color 0.2s ease;
+        }
+
+        .resource-link:hover {
+            color: #0d47a1;
+            text-decoration: underline;
+        }
+
+        .forms-list {
+            margin-top: 8px;
+            padding-left: 25px;
+        }
+
+        .forms-list li {
+            position: relative;
+            padding-left: 10px;
+        }
+
+        .forms-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        #message-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #45a049, #388e3c);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .topics-container {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .topics-container h3 {
+            margin-bottom: 15px;
+            color: #2e7d32;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .topics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .topic {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .topic:hover {
+            background: linear-gradient(135deg, #bbdefb, #90caf9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #f1f1f1, #e0e0e0);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            width: fit-content;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #666;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Scrollbar styling */
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Canadian Rights & Resources Chatbot</h1>
+            <p>Ask about your rights, how to file complaints, or access resources for gender equality and reduced inequalities in Canada</p>
+        </div>
+
+        <div class="chat-container" id="chat-container">
+            <div class="message bot-message">
+                <h3>Welcome to the Canadian Rights Assistant!</h3>
+                <p>I'm here to help you understand your rights and access resources related to gender equality and reduced inequalities in Canada. I can help you with:</p>
+                <ul>
+                    <li>Understanding your workplace rights</li>
+                    <li>Filing discrimination complaints</li>
+                    <li>Accessing legal resources</li>
+                    <li>Finding relevant forms and documentation</li>
+                </ul>
+                <p>Feel free to ask me anything or click on the suggested topics below!</p>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="message-input" placeholder="Type your question here..." autocomplete="off">
+            <button onclick="sendMessage()">Send Message</button>
+        </div>
+
+        <div class="topics-container">
+            <h3>💡 Suggested Topics</h3>
+            <div class="topics-list" id="topics-list">
+                <!-- Topics will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const topicsList = document.getElementById('topics-list');
+
+        // Load topics
+        fetch('/topics')
+            .then(response => response.json())
+            .then(data => {
+                data.topics.forEach(topic => {
+                    const topicElement = document.createElement('div');
+                    topicElement.className = 'topic';
+                    topicElement.textContent = topic;
+                    topicElement.onclick = () => sendMessage(topic);
+                    topicsList.appendChild(topicElement);
+                });
+            });
+
+        // Handle Enter key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage(topic = null) {
+            const message = topic || messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+
+            // Send message to server
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+
+                // Add bot response to chat
+                addMessage(data.response, 'bot');
+                
+                // Scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                typingIndicator.style.display = 'none';
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            });
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            if (sender === 'bot') {
+                // Split into main response and resources
+                const parts = text.split('\n\nRelevant Resources:');
+                
+                // Add main response
+                const mainResponse = document.createElement('div');
+                mainResponse.className = 'main-response';
+                
+                // Format the main response
+                const sections = parts[0].split('\n\n');
+                sections.forEach(section => {
+                    if (section.trim().startsWith(('1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '0.'))) {
+                        const lines = section.split('\n');
+                        const list = document.createElement('ol');
+                        lines.forEach(line => {
+                            if (line.trim().startsWith(('-', '*', '•'))) {
+                                const item = document.createElement('li');
+                                item.textContent = line.trim().substring(1).trim();
+                                list.appendChild(item);
+                            } else {
+                                const p = document.createElement('p');
+                                p.textContent = line;
+                                mainResponse.appendChild(p);
+                            }
+                        });
+                        mainResponse.appendChild(list);
+                    } else {
+                        const p = document.createElement('p');
+                        p.textContent = section;
+                        mainResponse.appendChild(p);
+                    }
+                });
+                
+                messageDiv.appendChild(mainResponse);
+                
+                // Add resources section if present
+                if (parts.length > 1) {
+                    const resourcesSection = document.createElement('div');
+                    resourcesSection.className = 'resources-section';
+                    
+                    const resourcesTitle = document.createElement('h3');
+                    resourcesTitle.textContent = 'Relevant Resources';
+                    resourcesSection.appendChild(resourcesTitle);
+                    
+                    const resources = parts[1].split('\n\n').filter(r => r.trim());
+                    resources.forEach(resource => {
+                        const resourceDiv = document.createElement('div');
+                        resourceDiv.className = 'resource-item';
+                        
+                        const lines = resource.split('\n');
+                        lines.forEach(line => {
+                            if (line.includes('Website:')) {
+                                const link = document.createElement('a');
+                                link.href = line.split('Website:')[1].trim();
+                                link.textContent = line.split('Website:')[1].trim();
+                                link.className = 'resource-link';
+                                link.target = '_blank';
+                                resourceDiv.appendChild(link);
+                            } else if (line.includes('Available Forms:')) {
+                                const formsList = document.createElement('ul');
+                                formsList.className = 'forms-list';
+                                resourceDiv.appendChild(formsList);
+                            } else if (line.trim().startsWith('-')) {
+                                const formItem = document.createElement('li');
+                                formItem.textContent = line.substring(1).trim();
+                                resourceDiv.querySelector('.forms-list').appendChild(formItem);
+                            } else if (line.trim().endsWith(':')) {
+                                const name = document.createElement('div');
+                                name.className = 'resource-name';
+                                name.textContent = line.trim();
+                                resourceDiv.appendChild(name);
+                            }
+                        });
+                        
+                        resourcesSection.appendChild(resourceDiv);
+                    });
+                    
+                    messageDiv.appendChild(resourcesSection);
+                }
+            } else {
+                messageDiv.textContent = text;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html> 
