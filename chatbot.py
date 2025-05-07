@@ -1,11 +1,71 @@
 import requests
 import time
 import json
-from typing import List, Dict
+from typing import List, Dict, Tuple, Optional
 import sys
+import os
+from dotenv import load_dotenv
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+import folium
+from folium import plugins
+from database import Database
 
-# Replace with your actual OpenRouter API key
-API_KEY = "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"
+# Load environment variables
+load_dotenv()
+
+# Get API key and HTTP referer from environment variables
+API_KEY = os.getenv('OPENROUTER_API_KEY')
+HTTP_REFERER = os.getenv('HTTP_REFERER', 'http://localhost:5000')
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+
+if not API_KEY:
+    raise ValueError("OPENROUTER_API_KEY not found in environment variables")
+
+# Initialize database
+db = Database()
+
+# Sample legal resources data
+LEGAL_RESOURCES = {
+    "legal_aid": [
+        {
+            "name": "Legal Aid Ontario",
+            "address": "20 Dundas Street West, Toronto, ON",
+            "type": "legal_aid",
+            "services": ["Criminal law", "Family law", "Immigration law"],
+            "coordinates": (43.6532, -79.3832)
+        },
+        {
+            "name": "Community Legal Services",
+            "address": "123 Main Street, Toronto, ON",
+            "type": "legal_aid",
+            "services": ["Housing law", "Employment law", "Social assistance"],
+            "coordinates": (43.6545, -79.3845)
+        }
+    ],
+    "law_firms": [
+        {
+            "name": "Smith & Associates",
+            "address": "456 Bay Street, Toronto, ON",
+            "type": "law_firms",
+            "services": ["Corporate law", "Real estate", "Tax law"],
+            "coordinates": (43.6520, -79.3820)
+        }
+    ],
+    "legal_clinics": [
+        {
+            "name": "Downtown Legal Services",
+            "address": "789 Queen Street West, Toronto, ON",
+            "type": "legal_clinics",
+            "services": ["Student legal services", "Community legal education"],
+            "coordinates": (43.6510, -79.3810)
+        }
+    ]
+}
+
+# Import initial data if database is empty
+if not db.get_all_resources():
+    db.import_initial_data(LEGAL_RESOURCES)
 
 # Canadian-specific topics and resources
 TOPIC_SUGGESTIONS = [
@@ -16,7 +76,11 @@ TOPIC_SUGGESTIONS = [
     "Employment Equity in Canada",
     "Immigration and Equality Rights",
     "Provincial vs Federal Rights",
-    "Legal Aid Resources"
+    "Legal Aid Resources",
+    "Workplace Harassment",
+    "Wrongful Termination",
+    "Employment Standards",
+    "Occupational Health and Safety"
 ]
 
 # Canadian resources and forms
@@ -36,6 +100,11 @@ CANADIAN_RESOURCES = {
         "url": "https://www.justice.gc.ca/eng/contact/aid-aide.html",
         "forms": ["Legal Aid Application"]
     },
+    "workplace_safety": {
+        "name": "Canadian Centre for Occupational Health and Safety",
+        "url": "https://www.ccohs.ca/",
+        "forms": ["Workplace Harassment Complaint Form", "Safety Concern Report"]
+    },
     "provincial_resources": {
         "ontario": "http://www.ohrc.on.ca/",
         "quebec": "https://www.cdpdj.qc.ca/en",
@@ -44,25 +113,81 @@ CANADIAN_RESOURCES = {
     }
 }
 
+# Legal resource locations database
+LEGAL_RESOURCES = {
+    "human_rights_offices": [
+        {
+            "name": "Canadian Human Rights Commission - Ottawa",
+            "address": "344 Slater Street, Ottawa, ON K1A 1E1",
+            "type": "human_rights",
+            "services": ["Discrimination complaints", "Human rights inquiries"],
+            "coordinates": (45.4215, -75.6972)
+        },
+        {
+            "name": "Ontario Human Rights Commission",
+            "address": "180 Dundas Street West, Toronto, ON M7A 2R9",
+            "type": "human_rights",
+            "services": ["Discrimination complaints", "Human rights education"],
+            "coordinates": (43.6532, -79.3832)
+        }
+    ],
+    "legal_aid_offices": [
+        {
+            "name": "Legal Aid Ontario - Toronto",
+            "address": "20 Dundas Street West, Toronto, ON M5G 2C2",
+            "type": "legal_aid",
+            "services": ["Legal representation", "Legal advice"],
+            "coordinates": (43.6548, -79.3807)
+        }
+    ],
+    "immigration_centers": [
+        {
+            "name": "Immigration, Refugees and Citizenship Canada - Vancouver",
+            "address": "300 West Georgia Street, Vancouver, BC V6B 6C9",
+            "type": "immigration",
+            "services": ["Immigration services", "Refugee assistance"],
+            "coordinates": (49.2827, -123.1207)
+        }
+    ],
+    "employment_centers": [
+        {
+            "name": "Employment and Social Development Canada - Montreal",
+            "address": "200 René-Lévesque Blvd W, Montreal, QC H2Z 1X4",
+            "type": "employment",
+            "services": ["Employment rights", "Workplace complaints"],
+            "coordinates": (45.5017, -73.5673)
+        }
+    ]
+}
+
 system_message = {
     "role": "system",
     "content": (
         "You are an expert assistant focused on Canadian rights and resources related to "
-        "gender equality (SDG-5) and reduced inequalities (SDG-10). "
+        "gender equality (SDG-5), reduced inequalities (SDG-10), and workplace rights. "
         "Your expertise includes:\n\n"
         "1. Canadian Rights and Legislation:\n"
         "   - Canadian Human Rights Act\n"
         "   - Employment Equity Act\n"
         "   - Pay Equity Act\n"
         "   - Provincial human rights codes\n"
-        "   - Workplace harassment laws\n\n"
-        "2. Filing Complaints and Forms:\n"
+        "   - Workplace harassment laws\n"
+        "   - Occupational Health and Safety laws\n"
+        "   - Employment Standards legislation\n\n"
+        "2. Legal Rights and Workplace Issues:\n"
+        "   - Workplace harassment and bullying\n"
+        "   - Constructive dismissal\n"
+        "   - Wrongful termination\n"
+        "   - Employment contracts\n"
+        "   - Workplace safety\n"
+        "   - Legal remedies and options\n\n"
+        "3. Filing Complaints and Forms:\n"
         "   - How to file discrimination complaints\n"
         "   - Required documentation and evidence\n"
         "   - Timeline and process expectations\n"
         "   - Appeals procedures\n"
         "   - Legal aid options\n\n"
-        "3. Available Resources:\n"
+        "4. Available Resources:\n"
         "   - Government agencies and contacts\n"
         "   - Legal aid services\n"
         "   - Advocacy organizations\n"
@@ -76,25 +201,131 @@ system_message = {
         "5. Maintain context from previous questions\n"
         "6. Format responses with clear sections\n"
         "7. Specify provincial vs federal jurisdiction\n"
-        "8. Include contact information for relevant agencies"
+        "8. Include contact information for relevant agencies\n"
+        "9. For legal questions, explain both the legal framework and practical steps\n"
+        "10. Always clarify when legal advice should be sought from a qualified lawyer"
     )
 }
 
 class Chatbot:
     def __init__(self):
         self.conversation_history: List[Dict] = [system_message]
-        self.max_history = 10  # Keep last 10 messages for context
+        self.max_history = 10
         self.current_topic = None
+        self.geolocator = Nominatim(user_agent="canadian_rights_chatbot")
+        self.db = Database()
         
-    def get_relevant_resources(self, topic: str) -> dict:
-        """Get relevant Canadian resources based on the topic"""
+    def create_map(self, user_location: tuple, resources: List[Dict]) -> str:
+        """Create an interactive map with user location and nearby resources"""
+        try:
+            # Create a map centered at user's location
+            m = folium.Map(location=user_location, zoom_start=12)
+            
+            # Add user location marker
+            folium.Marker(
+                user_location,
+                popup="Your Location",
+                icon=folium.Icon(color='blue', icon='info-sign')
+            ).add_to(m)
+            
+            # Add resource markers
+            for resource in resources:
+                folium.Marker(
+                    resource["coordinates"],
+                    popup=f"{resource['name']}<br>{resource['address']}<br>Distance: {resource['distance']}km",
+                    icon=folium.Icon(color='red', icon='info-sign')
+                ).add_to(m)
+                
+                # Add a line from user to resource
+                folium.PolyLine(
+                    locations=[user_location, resource["coordinates"]],
+                    color='gray',
+                    weight=2,
+                    opacity=0.8
+                ).add_to(m)
+            
+            # Ensure templates directory exists
+            os.makedirs('templates', exist_ok=True)
+            
+            # Save the map
+            map_file = "templates/map.html"
+            m.save(map_file)
+            print(f"Map saved to {map_file}")  # Debug print
+            return map_file
+        except Exception as e:
+            print(f"Error creating map: {str(e)}")  # Debug print
+            return None
+        
+    def find_nearby_resources(self, location: str, resource_type: str = None, max_distance: float = 50.0) -> List[Dict]:
+        """Find legal resources near a given location"""
+        try:
+            # Geocode the location
+            location_data = self.geolocator.geocode(location)
+            if not location_data:
+                return []
+                
+            user_coords = (location_data.latitude, location_data.longitude)
+            nearby_resources = []
+            
+            # Get resources from database
+            resources = self.db.get_resources_by_type(resource_type) if resource_type else self.db.get_all_resources()
+            
+            # Calculate distances and filter
+            for resource in resources:
+                distance = geodesic(user_coords, resource["coordinates"]).kilometers
+                if distance <= max_distance:
+                    resource_copy = resource.copy()
+                    resource_copy["distance"] = round(distance, 1)
+                    nearby_resources.append(resource_copy)
+            
+            # Sort by distance
+            return sorted(nearby_resources, key=lambda x: x["distance"])
+            
+        except Exception as e:
+            print(f"Error finding nearby resources: {str(e)}")
+            return []
+            
+    def format_location_response(self, resources: List[Dict], user_location: tuple) -> str:
+        """Format location-based response"""
+        if not resources:
+            return "I couldn't find any legal resources in that area. Please try a different location or check the resources online."
+            
+        response = "Here are the legal resources near you:\n\n"
+        
+        for resource in resources:
+            response += f"📍 {resource['name']}\n"
+            response += f"📌 Address: {resource['address']}\n"
+            response += f"📏 Distance: {resource['distance']} km\n"
+            response += f"🛠️ Services: {', '.join(resource['services'])}\n"
+            response += "\n"
+            
+        # Create and save the map
+        map_file = self.create_map(user_location, resources)
+        response += f"\n🗺️ View the interactive map: {map_file}"
+            
+        return response
+
+    def get_relevant_resources(self, topic: str, location: str = None) -> dict:
+        """Get relevant Canadian resources based on the topic and location"""
         resources = {}
+        
+        # Get topic-based resources
         if "discrimination" in topic.lower() or "rights" in topic.lower():
             resources["main"] = CANADIAN_RESOURCES["human_rights"]
         if "employment" in topic.lower() or "workplace" in topic.lower():
             resources["employment"] = CANADIAN_RESOURCES["employment"]
         if "legal" in topic.lower() or "law" in topic.lower():
             resources["legal"] = CANADIAN_RESOURCES["legal_aid"]
+            
+        # Add location-based resources if location is provided
+        if location:
+            location_data = self.geolocator.geocode(location)
+            if location_data:
+                user_coords = (location_data.latitude, location_data.longitude)
+                nearby_resources = self.find_nearby_resources(location)
+                if nearby_resources:
+                    resources["nearby"] = self.format_location_response(nearby_resources, user_coords)
+                
         return resources
         
     def format_resources(self, resources: dict) -> str:
@@ -156,17 +387,33 @@ class Chatbot:
     def ask_bot(self, prompt: str) -> str:
         """Get response from the API with error handling and rate limiting"""
         try:
+            # Check if the prompt is a location query
+            location_keywords = ['where', 'near', 'close to', 'in', 'at']
+            is_location_query = any(keyword in prompt.lower() for keyword in location_keywords)
+            
             # Add user message to history
             self.conversation_history.append({"role": "user", "content": prompt})
             
             # Show typing indicator
             self.show_typing_indicator()
             
+            # If it's a location query, extract the location
+            location = None
+            if is_location_query:
+                # Try to extract location from the prompt
+                words = prompt.lower().split()
+                for i, word in enumerate(words):
+                    if word in location_keywords and i + 1 < len(words):
+                        location = ' '.join(words[i+1:])
+                        break
+            
             # Make API request
             response = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {API_KEY}",
+                    "HTTP-Referer": HTTP_REFERER,
+                    "X-Title": "Canadian Rights Chatbot",
                     "Content-Type": "application/json"
                 },
                 json={
@@ -180,9 +427,25 @@ class Chatbot:
                 print("\nBot: I'm getting too many requests. Please wait a moment and try again.")
                 time.sleep(2)
                 return self.ask_bot(prompt)
+            
+            # Check if the response was successful
+            if response.status_code != 200:
+                error_msg = f"API request failed with status code {response.status_code}"
+                try:
+                    error_details = response.json()
+                    if "error" in error_details:
+                        error_msg += f": {error_details['error']}"
+                except:
+                    pass
+                raise Exception(error_msg)
                 
             # Get response content
             data = response.json()
+            
+            # Check if the response has the expected structure
+            if "choices" not in data or not data["choices"]:
+                raise Exception("Invalid API response format")
+                
             bot_response = data["choices"][0]["message"]["content"]
             
             # Validate response
@@ -190,7 +453,7 @@ class Chatbot:
                 raise Exception("Invalid response from API")
             
             # Get relevant resources
-            resources = self.get_relevant_resources(prompt)
+            resources = self.get_relevant_resources(prompt, location)
             
             # Format response with resources
             formatted_response = self.format_response(bot_response, resources)
@@ -204,6 +467,10 @@ class Chatbot:
             
             return formatted_response
             
+        except requests.exceptions.RequestException as e:
+            return f"I apologize, but I encountered a network error: {str(e)}"
+        except json.JSONDecodeError:
+            return "I apologize, but I received an invalid response from the server."
         except Exception as e:
             error_msg = f"I apologize, but I encountered an error: {str(e)}"
             if "rate limit" in str(e).lower():
