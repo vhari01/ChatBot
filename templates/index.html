@@ -363,6 +363,7 @@
     </div>
 
     <script>
+        const API_BASE_URL = 'http://localhost:5001';
         const chatContainer = document.getElementById('chat-container');
         const messageInput = document.getElementById('message-input');
         const typingIndicator = document.getElementById('typing-indicator');
@@ -400,11 +401,9 @@
             typingIndicator.style.display = 'block';
 
             // Send message to server
-            fetch('/chat', {
+            fetch(`${API_BASE_URL}/api/chat`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message }),
             })
             .then(response => response.json())

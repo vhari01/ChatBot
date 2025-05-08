@@ -10,7 +10,7 @@ app = Flask(__name__)
 # Configure CORS to allow requests from your frontend
 CORS(app, resources={
     r"/*": {  # Allow all routes
-        "origins": ["http://localhost:8082", "http://127.0.0.1:8082"],
+        "origins": ["http://localhost:8081", "http://127.0.0.1:8081"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
     }
@@ -86,7 +86,7 @@ def not_found(error):
 
 if __name__ == '__main__':
     print("\n🚀 Starting Legal Rights Chatbot API Server...")
-    print("💡 Server running at http://localhost:5000")
+    print("💡 Server running at http://localhost:5001")
     print("\nAvailable endpoints:")
     print("  - GET  /              : API information")
     print("  - GET  /api/test      : Test endpoint")
@@ -94,4 +94,4 @@ if __name__ == '__main__':
     print("  - GET  /api/resources : Get resources")
     print("\nPress Ctrl+C to stop the server\n")
     
-    app.run(debug=True, port=5000) 
+    app.run(port=5001, debug=True) 

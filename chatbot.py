@@ -15,7 +15,7 @@ from database import Database
 load_dotenv()
 
 # Get API key and HTTP referer from environment variables
-API_KEY = os.getenv('OPENROUTER_API_KEY')
+API_KEY = os.getenv("OPENROUTER_API_KEY")
 HTTP_REFERER = os.getenv('HTTP_REFERER', 'http://localhost:5000')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
