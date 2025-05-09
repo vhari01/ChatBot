@@ -3,6 +3,7 @@ from chatbot import Chatbot
 from database import Database
 from flask_cors import CORS
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
@@ -10,7 +11,7 @@ app = Flask(__name__)
 # Configure CORS to allow requests from your frontend
 CORS(app, resources={
     r"/*": {  # Allow all routes
-        "origins": ["http://localhost:8081", "http://127.0.0.1:8081"],
+        "origins": ["http://localhost:8080", "http://127.0.0.1:8080"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
     }
@@ -18,6 +19,9 @@ CORS(app, resources={
 
 chatbot = Chatbot()
 db = Database()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @app.route('/', methods=['GET'])
 def home():
