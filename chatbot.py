@@ -19,6 +19,10 @@ API_KEY = os.getenv("OPENROUTER_API_KEY")
 HTTP_REFERER = os.getenv('HTTP_REFERER', 'http://localhost:5000')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
+print("Debug - Environment variables loaded:")
+print(f"API_KEY length: {len(API_KEY) if API_KEY else 0}")
+print(f"HTTP_REFERER: {HTTP_REFERER}")
+
 if not API_KEY:
     raise ValueError("OPENROUTER_API_KEY not found in environment variables")
 
