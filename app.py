@@ -52,13 +52,29 @@ def chat():
             return jsonify({'error': 'No message provided'}), 400
         
         response = chatbot.ask_bot(user_message)
+        # Generate downloadable links based on the user's query
+        resources = generate_resources(user_message)
         return jsonify({
             'response': response,
-            'suggestions': chatbot.show_topic_suggestions()
+            'resources': resources
         })
     except Exception as e:
         logger.error(f"Error in chat endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def generate_resources(query):
+    # Simplified function to generate downloadable links based on the query
+    resources = []
+    if 'workplace safety' in query.lower():
+        resources = [
+            {'title': 'Workplace Safety Guide', 'link': 'https://www.canada.ca/en/employment-social-development/services/health-safety/reports/workplace-safety.html'}
+        ]
+    elif 'discrimination' in query.lower():
+        resources = [
+            {'title': 'Discrimination Complaint Form', 'link': 'https://www.canada.ca/en/employment-social-development/services/health-safety/reports/workplace-safety.html'}
+        ]
+    # Add more conditions for other topics as needed
+    return resources
 
 @app.route('/api/resources', methods=['GET'])
 def get_resources():
